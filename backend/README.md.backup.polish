@@ -1,0 +1,156 @@
+# Gym Management System - Quick Start Guide
+
+## Prerequisites
+✅ MySQL 8.0.46 - Installed and Running (Service: MySQL80)
+✅ Java 21 - Configured in build.gradle
+✅ Gradle - Wrapper included
+
+## Database Setup
+
+### 1. Set MySQL Password (PowerShell)
+```powershell
+# Set for current session
+$env:MYSQL_PASSWORD = "your_mysql_root_password"
+
+# Or set permanently (Windows)
+[System.Environment]::SetEnvironmentVariable('MYSQL_PASSWORD', 'your_password', 'User')
+```
+
+### 2. Verify Database Connection (Optional)
+```powershell
+# Connect to MySQL to verify
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+
+# In MySQL shell, verify/create database:
+SHOW DATABASES;
+CREATE DATABASE IF NOT EXISTS gymapp;
+USE gymapp;
+```
+
+The application will automatically create the database if it doesn't exist due to:
+```
+createDatabaseIfNotExist=true
+```
+
+## Running the Application
+
+### Start the server:
+```powershell
+cd "c:\Users\user\Desktop\gymapp (1)\gymapp"
+.\gradlew.bat bootRun
+```
+
+### Expected Output:
+```
+Started GymappApplication in X.XXX seconds
+Tomcat started on port 8080
+```
+
+## Accessing the API
+
+### Swagger UI (Interactive Documentation)
+```
+http://localhost:8080/swagger-ui.html
+```
+
+### OpenAPI JSON Specification
+```
+http://localhost:8080/api-docs
+```
+
+### Direct API Endpoints
+```
+GET    http://localhost:8080/api/gym-classes
+POST   http://localhost:8080/api/gym-classes
+GET    http://localhost:8080/api/gym-classes/{uuid}
+PUT    http://localhost:8080/api/gym-classes/{uuid}
+DELETE http://localhost:8080/api/gym-classes/{uuid}
+GET    http://localhost:8080/api/gym-classes?trainerId=1
+```
+
+## Testing with Swagger UI
+
+1. Open http://localhost:8080/swagger-ui.html
+2. Click on "Gym Classes" to expand
+3. Click "Try it out" on any endpoint
+4. Fill in the request body (for POST/PUT)
+5. Click "Execute" to test
+
+### Example POST Request Body:
+```json
+{
+  "name": "Morning Yoga",
+  "trainerId": 1,
+  "capacity": 20,
+  "dateTime": "2026-07-28T10:00:00"
+}
+```
+
+**Note:** You'll need to create a Trainer first before creating GymClasses. We can add seed data or create other entities next.
+
+## Troubleshooting
+
+### Port 8080 already in use:
+```properties
+# Add to application.properties
+server.port=8081
+```
+
+### MySQL Connection Failed:
+- Verify MySQL80 service is running: `Get-Service MySQL80`
+- Check credentials in application.properties
+- Ensure MYSQL_PASSWORD environment variable is set
+
+### Database Not Created:
+```sql
+-- Connect to MySQL and run:
+CREATE DATABASE gymapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+## Next Steps
+
+1. ✅ **Authentication Implemented** - See [JWT_TESTING_GUIDE.md](./JWT_TESTING_GUIDE.md)
+2. Add seed data (optional - for demo purposes)
+3. Create integration tests with Postman
+4. Connect React frontend from Lovable AI (configure CORS)
+5. Deploy to production environment
+
+## Security Features
+
+✅ **Spring Security** - Role-based access control (ADMIN, TRAINER, MEMBER)  
+✅ **JWT Authentication** - Stateless token-based authentication  
+✅ **BCrypt Password Hashing** - Secure password storage  
+✅ **Token Expiration** - 24-hour token validity  
+
+### Authentication Quick Start
+
+**1. Register a new user**:
+```bash
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "admin@gym.com",
+  "password": "admin123",
+  "role": "ADMIN"
+}
+```
+
+**2. Login and get JWT token**:
+```bash
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gym.com",
+  "password": "admin123"
+}
+```
+
+**3. Use the token** in Swagger UI:
+- Click "Authorize" button
+- Enter: `Bearer <your-token>`
+- Now you can access protected endpoints
+
+For complete authentication flow and role-based testing, see [JWT_TESTING_GUIDE.md](./JWT_TESTING_GUIDE.md).
