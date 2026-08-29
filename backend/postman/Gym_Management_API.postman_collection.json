@@ -129,20 +129,17 @@
                   "    pm.response.to.have.status(201);",
                   "});",
                   "",
-                  "pm.test(\"Response has token and role TRAINER\", function () {",
+                  "pm.test(\"Response has uuid and role TRAINER\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.uuid).to.be.a('string');",
                   "    pm.expect(jsonData.role).to.eql('TRAINER');",
-                  "    pm.collectionVariables.set(\"user_uuid\", jsonData.userUuid);",
+                  "    pm.collectionVariables.set(\"user_uuid\", jsonData.uuid);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
             "method": "POST",
             "header": [
               {
@@ -155,9 +152,9 @@
               "raw": "{\n  \"name\": \"Jane Trainer\",\n  \"email\": \"{{trainer_email}}\",\n  \"password\": \"password123\",\n  \"role\": \"TRAINER\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/auth/register",
+              "raw": "{{base_url}}/users",
               "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
+              "path": ["users"]
             }
           }
         },
