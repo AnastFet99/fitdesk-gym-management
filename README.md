@@ -37,11 +37,11 @@ The system allows a gym to manage users, trainers, members, gym classes, booking
 
 | Layer | Technology | Location |
 |-------|------------|----------|
-| **Backend API** | Spring Boot 4.x, Java 21, Gradle | This repository (`gymapp`) |
+| **Backend API** | Spring Boot 4.x, Java 21, Gradle | `backend/` |
 | **Database** | MySQL 8.x | `gymapp` schema on `localhost:3306` |
-| **Frontend UI** | React 19, TypeScript, Vite 8 | `gym-frontend-final` (separate folder) |
+| **Frontend UI** | React 19, TypeScript, Vite 8 | `frontend/` |
 | **API docs** | SpringDoc OpenAPI (Swagger UI) | `http://localhost:8080/swagger-ui.html` |
-| **Integration tests** | Postman collection | `postman/Gym_Management_API.postman_collection.json` |
+| **Integration tests** | Postman collection | `backend/postman/Gym_Management_API.postman_collection.json` |
 
 **Default URLs (local development):**
 
@@ -80,7 +80,7 @@ There is **no cloud deployment configured** in this project. Deployment means pr
 
 ## 3. Domain Model / Main Entities
 
-Domain-driven entities in `src/main/java/gr/aueb/cf10/gymapp/model/`:
+Domain-driven entities in `backend/src/main/java/gr/aueb/cf10/gymapp/model/`:
 
 | Entity | Table | Description |
 |--------|-------|-------------|
@@ -146,7 +146,7 @@ Hibernate creates/updates tables automatically (`spring.jpa.hibernate.ddl-auto=u
 
 ## 6. Frontend (FitDesk)
 
-**Path:** `C:\Users\user\Desktop\gym-frontend-final` (or your clone of that folder).
+**Path:** `frontend/` (in this repository).
 
 | Feature | Route / behaviour |
 |---------|-------------------|
@@ -161,42 +161,43 @@ Hibernate creates/updates tables automatically (`spring.jpa.hibernate.ddl-auto=u
 
 **DTO rule:** Use `uuid`, `memberUuid`, `gymClassUuid`, `userUuid` — not internal numeric `id`.
 
-Frontend-specific detail: see `gym-frontend-final/README.md`, `FINAL_AUDIT.md`, and `IMPLEMENTATION_REPORT.md`.
+Frontend-specific detail: see `frontend/README.md`, `frontend/FINAL_AUDIT.md`, and `frontend/IMPLEMENTATION_REPORT.md`.
 
 ---
 
 ## 7. Repository / Submission Structure
 
 ```
-gymapp/                              ← Backend (this repo) — START HERE
+fitdesk-gym-management/              ← Monorepo root — START HERE
 ├── README.md                        ← Main full-stack guide (this file)
-├── build.gradle
-├── src/main/java/.../gymapp/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── model/
-│   ├── dto/
-│   ├── config/
-│   └── security/
-├── src/main/resources/
-│   └── application.properties
-├── postman/
-│   └── Gym_Management_API.postman_collection.json
-├── JWT_TESTING_GUIDE.md
-├── FINAL_API_DOCUMENTATION1.md
-├── PROJECT_STATUS.md
-└── ... (other supporting .md files)
-
-gym-frontend-final/                  ← Frontend (separate folder)
-├── README.md                        ← Frontend-focused reference (points here)
-├── FINAL_AUDIT.md
-├── IMPLEMENTATION_REPORT.md
-├── src/
-└── package.json
+├── backend/
+│   ├── README.md
+│   ├── build.gradle
+│   ├── src/main/java/.../gymapp/
+│   │   ├── controller/
+│   │   ├── service/
+│   │   ├── repository/
+│   │   ├── model/
+│   │   ├── dto/
+│   │   ├── config/
+│   │   └── security/
+│   ├── src/main/resources/
+│   │   └── application.properties
+│   ├── postman/
+│   │   └── Gym_Management_API.postman_collection.json
+│   ├── JWT_TESTING_GUIDE.md
+│   ├── FINAL_API_DOCUMENTATION1.md
+│   ├── PROJECT_STATUS.md
+│   └── ... (other supporting .md files)
+└── frontend/
+    ├── README.md                    ← Frontend-focused reference (points here)
+    ├── FINAL_AUDIT.md
+    ├── IMPLEMENTATION_REPORT.md
+    ├── src/
+    └── package.json
 ```
 
-Submit **both** folders (or a monorepo containing both). Graders should begin with **this README**.
+This repository is a monorepo containing `backend/` and `frontend/`. Graders should begin with **this README**.
 
 ---
 
@@ -207,7 +208,7 @@ Submit **both** folders (or a monorepo containing both). Graders should begin wi
 | **Java** | 21 (see `build.gradle` toolchain) |
 | **Gradle** | Wrapper included (`gradlew.bat`) |
 | **MySQL** | 8.x, service running (e.g. `MySQL80` on Windows) |
-| **Node.js + npm** | For frontend (`gym-frontend-final`) |
+| **Node.js + npm** | For frontend (`frontend/`) |
 | **Postman** | Optional — for API integration tests |
 
 ---
@@ -259,7 +260,7 @@ $env:JWT_SECRET = "<your_jwt_secret>"
 
 ### Frontend
 
-Create `.env` in `gym-frontend-final` (see `.env.example`):
+Create `.env` in `frontend/` (see `.env.example`):
 
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api
@@ -272,7 +273,7 @@ For production builds, set `VITE_API_BASE_URL` to your deployed API URL **before
 ## 11. Run the Backend (Development)
 
 ```powershell
-cd "C:\Users\user\Desktop\gymapp (1)\gymapp"
+cd backend
 $env:MYSQL_PASSWORD = "<your_mysql_password>"
 $env:JWT_SECRET = "<your_jwt_secret>"
 .\gradlew.bat bootRun
@@ -289,7 +290,7 @@ API base: `http://localhost:8080/api`
 Start the backend first.
 
 ```powershell
-cd "C:\Users\user\Desktop\gym-frontend-final"
+cd frontend
 npm install
 npm run dev
 ```
@@ -309,7 +310,7 @@ Open: `http://localhost:5173`
 ### Backend — executable JAR
 
 ```powershell
-cd "C:\Users\user\Desktop\gymapp (1)\gymapp"
+cd backend
 $env:MYSQL_PASSWORD = "<your_mysql_password>"
 $env:JWT_SECRET = "<your_jwt_secret>"
 .\gradlew.bat clean bootJar
@@ -332,7 +333,7 @@ Currently includes Spring Boot context load test (`GymappApplicationTests`).
 ### Frontend — production static build
 
 ```powershell
-cd "C:\Users\user\Desktop\gym-frontend-final"
+cd frontend
 npm install
 npm run build
 ```
@@ -392,7 +393,7 @@ Set the API URL to your deployed backend **before** building:
 ```powershell
 # PowerShell example — adjust URL to your backend
 $env:VITE_API_BASE_URL = "https://api.your-domain.example/api"
-cd "C:\Users\user\Desktop\gym-frontend-final"
+cd frontend
 npm run build
 ```
 
@@ -451,7 +452,7 @@ All REST controllers are annotated with `@Tag`, `@Operation`, and `@ApiResponses
 **Collection path (included in this repo):**
 
 ```
-postman/Gym_Management_API.postman_collection.json
+backend/postman/Gym_Management_API.postman_collection.json
 ```
 
 **How to run:**
@@ -478,10 +479,10 @@ Re-run the collection after any API changes to confirm regression status.
 
 | Type | Location | Notes |
 |------|----------|-------|
-| **Postman integration** | `postman/Gym_Management_API.postman_collection.json` | 58/58 baseline per `FINAL_API_DOCUMENTATION1.md` |
+| **Postman integration** | `backend/postman/Gym_Management_API.postman_collection.json` | 58/58 baseline per `FINAL_API_DOCUMENTATION1.md` |
 | **JUnit** | `src/test/java/.../GymappApplicationTests.java` | Context load smoke test |
 | **Swagger manual** | Swagger UI | Interactive endpoint testing |
-| **Frontend manual** | FitDesk UI | Login, register, book, cancel — see `gym-frontend-final/FINAL_AUDIT.md` |
+| **Frontend manual** | FitDesk UI | Login, register, book, cancel — see `frontend/FINAL_AUDIT.md` |
 
 **Suggested verification order:**
 
@@ -546,9 +547,9 @@ Supporting files (kept for reference; **this README is authoritative for setup/s
 | `SPRING_SECURITY_IMPLEMENTATION.md` | Security design notes |
 | `REACT_INTEGRATION_GUIDE.md` | Frontend integration reference |
 | `HELP.md` | Spring Boot / Gradle reference links |
-| `gym-frontend-final/README.md` | Frontend architecture and API field reference |
-| `gym-frontend-final/FINAL_AUDIT.md` | Frontend final audit |
-| `gym-frontend-final/IMPLEMENTATION_REPORT.md` | Initial frontend implementation report |
+| `frontend/README.md` | Frontend architecture and API field reference |
+| `frontend/FINAL_AUDIT.md` | Frontend final audit |
+| `frontend/IMPLEMENTATION_REPORT.md` | Initial frontend implementation report |
 
 **Known stale content in older docs:** `PROJECT_STATUS.md` may still list Postman as TODO; `README.md.backup.polish` and older backend README snippets may reference `trainerId` or outdated next steps — use this README and `FINAL_API_DOCUMENTATION1.md` instead.
 
@@ -561,12 +562,12 @@ Supporting files (kept for reference; **this README is authoritative for setup/s
 | Domain model + database | ✅ |
 | Layered backend (Controller / Service / Repository) | ✅ |
 | REST API | ✅ |
-| React frontend | ✅ (`gym-frontend-final`) |
+| React frontend | ✅ (`frontend/`) |
 | Authentication & authorization (backend + frontend) | ✅ |
 | Testing (JUnit + Postman) | ✅ Postman 58/58; minimal JUnit |
 | Swagger documentation | ✅ |
 | README build + deploy | ✅ (this document) |
-| GitHub / portfolio ready | Submit backend + frontend + this README |
+| GitHub / portfolio ready | Submit this monorepo (`backend/`, `frontend/`, and this README) |
 
 ---
 

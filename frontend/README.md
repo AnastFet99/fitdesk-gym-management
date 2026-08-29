@@ -1,8 +1,9 @@
 # FitDesk — Gym Management Frontend (Final)
 
 > **Full-stack submission guide (start here for grading/setup):**  
-> Main README — backend project: `C:\Users\user\Desktop\gymapp (1)\gymapp\README.md`  
-> Covers architecture, database, env vars, build, deployment, Swagger, Postman (`postman/Gym_Management_API.postman_collection.json`), and how to run both backend and frontend.
+> Main README — repository root: `../README.md`
+> Backend README: `../backend/README.md`
+> Covers architecture, database, env vars, build, deployment, Swagger, Postman (`../backend/postman/Gym_Management_API.postman_collection.json`), and how to run both backend and frontend.
 
 A production-oriented React frontend for the Gym Management System. This project communicates directly with the existing Spring Boot backend and treats the backend/database as the **source of truth**.
 
@@ -10,8 +11,8 @@ A production-oriented React frontend for the Gym Management System. This project
 
 | Component | Path |
 |-----------|------|
-| **Frontend** | `C:\Users\user\Desktop\gym-frontend-final` |
-| **Backend** | `C:\Users\user\Desktop\gymapp (1)\gymapp` |
+| **Frontend** | `frontend/` (this directory) |
+| **Backend** | `../backend/` |
 
 | Service | URL |
 |---------|-----|
@@ -330,7 +331,7 @@ dist/assets/index-s5l68yri.js   338.18 kB
 ### Terminal 1 — Backend
 
 ```powershell
-cd "C:\Users\user\Desktop\gymapp (1)\gymapp"
+cd ../backend
 .\gradlew.bat bootRun
 ```
 
@@ -344,10 +345,9 @@ If PowerShell blocks npm scripts:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-Then:
+Then (from `frontend/`):
 
 ```powershell
-cd "C:\Users\user\Desktop\gym-frontend-final"
 npm install
 npm run dev
 ```
@@ -395,8 +395,8 @@ This frontend does **not** modify:
 - Database schema or data
 - Postman collection contents
 
-Postman collection location: `gymapp/postman/Gym_Management_API.postman_collection.json`  
-Verified baseline (see backend `FINAL_API_DOCUMENTATION1.md`): **58/58 tests passed**.
+Postman collection location: `../backend/postman/Gym_Management_API.postman_collection.json`
+Verified baseline (see `../backend/FINAL_API_DOCUMENTATION1.md`): **58/58 tests passed**.
 
 ---
 
