@@ -159,7 +159,17 @@ Hibernate creates/updates tables automatically (`spring.jpa.hibernate.ddl-auto=u
 | **Book** | `POST /api/bookings` with `memberUuid`, `gymClassUuid`, `status` |
 | **Cancel** | `DELETE /api/bookings/{bookingUuid}` — use **booking** UUID, not class UUID |
 
-**DTO rule:** Use `uuid`, `memberUuid`, `gymClassUuid`, `userUuid` — not internal numeric `id`.
+**DTO / UUID rule:** APIs use public UUIDs, not numeric `id`.
+
+| UUID | Meaning | Typical use |
+|------|---------|-------------|
+| **User UUID** (`userUuid`) | `users.uuid` — login/register account | `POST /api/trainers` and `POST /api/members` `userUuid` |
+| **Trainer profile UUID** | `trainers.uuid` | Gym class `trainerUuid` |
+| **Member profile UUID** | `members.uuid` | Booking `memberUuid` |
+| **Gym class UUID** | `gym_classes.uuid` | Booking `gymClassUuid`; get/delete class |
+| **Booking UUID** | `bookings.uuid` | Cancel/delete booking |
+
+`trainerUuid` on gym-class requests is the **trainer profile** UUID (from `POST /api/trainers`), **not** the trainer’s user UUID. `memberUuid` on bookings is the **member profile** UUID (from `POST /api/members`), **not** the member’s user UUID.
 
 Frontend-specific detail: see `frontend/README.md`, `frontend/FINAL_AUDIT.md`, and `frontend/IMPLEMENTATION_REPORT.md`.
 
@@ -231,7 +241,7 @@ This repository is a monorepo containing `backend/` and `frontend/`. Graders sho
 CREATE DATABASE IF NOT EXISTS gymapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Demo users are **not** auto-seeded by the backend. Create them via Postman (included collection) or `POST /api/auth/register`, then create trainer/member profiles as needed.
+Demo users are **not** auto-seeded. There is **no** database seed in this project. Create users via Postman or `POST /api/auth/register`, then create trainer/member **profiles** (`POST /api/trainers`, `POST /api/members`) as needed.
 
 ---
 
@@ -460,18 +470,24 @@ backend/postman/Gym_Management_API.postman_collection.json
 1. Import the JSON file into Postman.
 2. Ensure the backend is running (`bootRun` or JAR).
 3. Set collection variable `base_url` to `http://localhost:8080/api` (if not already set).
-4. Run the collection with the Collection Runner.
+4. Run requests **in collection order** (1.1 → … → 7.2), or use the Collection Runner.
 
-**Verified baseline** (documented in `FINAL_API_DOCUMENTATION1.md`):
+**Current working flow (manually verified):**
 
-| Metric | Result |
-|--------|--------|
-| Total tests | 58 |
-| Passed | 58 |
-| Failed | 0 |
-| Pass rate | 100% |
+| Step | Request | What it does |
+|------|---------|----------------|
+| **1.1** | `POST /api/auth/register` | Register **ADMIN** (no auth). Save JWT → `jwt_token`. |
+| **1.2** | `POST /api/users` | Create **TRAINER user**. Requires `Authorization: Bearer {{jwt_token}}` (admin from 1.1). **Not** `POST /api/auth/register`. |
+| **1.3** | `POST /api/auth/register` | Register **MEMBER**. |
+| **3.2** | `POST /api/trainers` | Trainer **profile**; save **profile** UUID → `trainer_uuid`. |
+| **4.2** | `POST /api/members` | Member **profile**; save **profile** UUID → `member_uuid`. |
+| **5.2 / 6.1** | `POST /api/gym-classes` | Use `trainer_uuid` (profile). |
+| **6.3** | `POST /api/bookings` | Use `member_uuid` (profile) + `class_uuid`. |
+| **7.1–7.2** | Unauthorized / invalid token | Expect **401**. |
 
-Re-run the collection after any API changes to confirm regression status.
+If `admin@gym.com` / `trainer@gym.com` / `member@gym.com` already exist, 1.1–1.3 will **409**. Use unique emails in collection variables, or use an empty database.
+
+**Manually verified (this submission):** Postman **1.1–6.6** succeeded; **7.1–7.2** are complete. There is **no saved Collection Runner report** in the repository proving a current 58/58 run. `FINAL_API_DOCUMENTATION1.md` records a **historical** documented Runner result of 58/58; treat that as historical, not as a stored artifact.
 
 ---
 
@@ -479,7 +495,7 @@ Re-run the collection after any API changes to confirm regression status.
 
 | Type | Location | Notes |
 |------|----------|-------|
-| **Postman integration** | `backend/postman/Gym_Management_API.postman_collection.json` | 58/58 baseline per `FINAL_API_DOCUMENTATION1.md` |
+| **Postman integration** | `backend/postman/Gym_Management_API.postman_collection.json` | 1.1–6.6 manually verified; 7.1–7.2 complete |
 | **JUnit** | `src/test/java/.../GymappApplicationTests.java` | Context load smoke test |
 | **Swagger manual** | Swagger UI | Interactive endpoint testing |
 | **Frontend manual** | FitDesk UI | Login, register, book, cancel — see `frontend/FINAL_AUDIT.md` |
@@ -487,14 +503,14 @@ Re-run the collection after any API changes to confirm regression status.
 **Suggested verification order:**
 
 1. `.\gradlew.bat test`
-2. Start backend → Postman collection runner (58 tests)
+2. Start backend → Postman collection in order (1.1–6.6, then 7.1–7.2)
 3. Start frontend → demo member flow (login → classes → book → refresh → cancel)
 
 ---
 
 ## 18. Demo Accounts
 
-Use these **only if they already exist in your database** (typically created by the Postman collection or prior registration):
+Use these **only if the corresponding users already exist** in MySQL. The project does **not** seed them automatically. Create them with Postman or `POST /api/auth/register` (and `POST /api/users` for the trainer user in the collection flow).
 
 | Name | Email | Role | Password |
 |------|-------|------|----------|
@@ -516,7 +532,7 @@ The FitDesk login page can prefill these credentials. New registrations via `/re
 | 401 on API calls | Missing/expired JWT | Login again; check `Authorization: Bearer ...` header |
 | Frontend can't reach API | Wrong `VITE_API_BASE_URL` | Set `.env` to `http://localhost:8080/api` |
 | CORS errors in browser | Frontend origin not allowed | Add origin to `CORS_ORIGINS` |
-| Class create fails | Wrong trainer reference | Use `trainerUuid` (Trainer profile UUID), not numeric id |
+| Class create fails | Wrong trainer reference | Use **trainer profile** UUID (`trainers.uuid`), not the user UUID from login/register |
 | Cancel booking fails | Wrong UUID | Use `booking.uuid`, not `gymClassUuid` |
 | npm script blocked (Windows) | PowerShell execution policy | `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` |
 
@@ -541,17 +557,17 @@ Supporting files (kept for reference; **this README is authoritative for setup/s
 
 | File | Purpose |
 |------|---------|
-| `JWT_TESTING_GUIDE.md` | JWT and role-based API testing |
-| `FINAL_API_DOCUMENTATION1.md` | Postman 58/58 baseline and API QA notes |
-| `PROJECT_STATUS.md` | Development checklist (some items may be outdated) |
-| `SPRING_SECURITY_IMPLEMENTATION.md` | Security design notes |
-| `REACT_INTEGRATION_GUIDE.md` | Frontend integration reference |
-| `HELP.md` | Spring Boot / Gradle reference links |
+| `backend/JWT_TESTING_GUIDE.md` | JWT and role-based API testing |
+| `backend/FINAL_API_DOCUMENTATION1.md` | API QA notes and historical Postman Runner notes |
+| `backend/PROJECT_STATUS.md` | Development checklist (some items may be outdated) |
+| `backend/SPRING_SECURITY_IMPLEMENTATION.md` | Security design notes |
+| `backend/REACT_INTEGRATION_GUIDE.md` | Frontend integration reference |
+| `backend/HELP.md` | Spring Boot / Gradle reference links |
 | `frontend/README.md` | Frontend architecture and API field reference |
 | `frontend/FINAL_AUDIT.md` | Frontend final audit |
 | `frontend/IMPLEMENTATION_REPORT.md` | Initial frontend implementation report |
 
-**Known stale content in older docs:** `PROJECT_STATUS.md` may still list Postman as TODO; `README.md.backup.polish` and older backend README snippets may reference `trainerId` or outdated next steps — use this README and `FINAL_API_DOCUMENTATION1.md` instead.
+**Known stale content in older docs:** `backend/PROJECT_STATUS.md` may still list Postman as TODO. Prefer this README and `backend/FINAL_API_DOCUMENTATION1.md` for setup and Postman order.
 
 ---
 
@@ -564,7 +580,7 @@ Supporting files (kept for reference; **this README is authoritative for setup/s
 | REST API | ✅ |
 | React frontend | ✅ (`frontend/`) |
 | Authentication & authorization (backend + frontend) | ✅ |
-| Testing (JUnit + Postman) | ✅ Postman 58/58; minimal JUnit |
+| Testing (JUnit + Postman) | ✅ Postman 1.1–6.6 + 7.1–7.2 (manual); minimal JUnit |
 | Swagger documentation | ✅ |
 | README build + deploy | ✅ (this document) |
 | GitHub / portfolio ready | Submit this monorepo (`backend/`, `frontend/`, and this README) |

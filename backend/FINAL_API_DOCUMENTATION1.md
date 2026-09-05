@@ -2,7 +2,14 @@
 
 ## Final status
 
-Final Postman Collection Runner result:
+**Manually verified for this submission:**
+
+- Postman requests **1.1–6.6** ran successfully
+- Postman **7.1–7.2** are complete (unauthorized / invalid token → 401)
+
+There is **no saved Collection Runner report** in the repository for a current 58/58 run.
+
+A **historical** documented Collection Runner result (not stored as an export in git) was:
 
 -   Total tests: **58**
 -   Passed: **58**
@@ -11,7 +18,39 @@ Final Postman Collection Runner result:
 -   Errors: **0**
 -   Pass rate: **100%**
 
-This is the current regression/acceptance baseline.
+Treat that 58/58 line as **historical documentation only**, not as proof of a saved report.
+
+Canonical collection: `postman/Gym_Management_API.postman_collection.json`
+
+## Current working Postman order (start)
+
+### 1.1 Register Admin
+
+``` http
+POST {{base_url}}/auth/register
+```
+
+No Bearer token. Creates an **ADMIN** user and returns a JWT. Save `token` to `jwt_token`.
+
+### 1.2 Register Trainer (create TRAINER **user**)
+
+``` http
+POST {{base_url}}/users
+```
+
+Authorization: `Bearer {{jwt_token}}` (admin JWT from **1.1**).
+
+This is **`POST /api/users`**, **not** `POST /api/auth/register`. It creates the TRAINER **authentication user**. It does **not** create the trainer **profile**.
+
+### 1.3 Register Member
+
+``` http
+POST {{base_url}}/auth/register
+```
+
+Creates the MEMBER **user**. Profile is created later (`POST /api/members`).
+
+If collection emails (`admin@gym.com`, `trainer@gym.com`, `member@gym.com`) already exist, register/create-user returns **409**. Use unique emails or an empty database. There is **no** automatic seed.
 
 ## Collection variables
 
@@ -42,7 +81,7 @@ Protected endpoints use:
 Bearer Token: {{jwt_token}}
 ```
 
-Login requests obtain the JWT and save it to `jwt_token`.
+Login requests obtain the JWT and save it to `jwt_token`. Demo/test password used in this project: **`password123`**.
 
 Trainer login is expected to return HTTP 200, a string `token`, and role
 `TRAINER`.
@@ -52,17 +91,17 @@ Member login is expected to return HTTP 200, a string `token`, and role
 
 ## Important UUID distinction
 
-The project must distinguish between:
+| Name | Table | Used for |
+|------|--------|----------|
+| Authentication **user UUID** | `users.uuid` | Login/register; `userUuid` on create trainer/member **profile** |
+| **Trainer profile UUID** | `trainers.uuid` | Gym class field **`trainerUuid`** |
+| **Member profile UUID** | `members.uuid` | Booking field **`memberUuid`** |
+| Gym class UUID | `gym_classes.uuid` | Booking `gymClassUuid` |
+| Booking UUID | `bookings.uuid` | Delete booking |
 
--   authentication `userUuid`
--   trainer profile `trainerUuid`
--   member `memberUuid`
--   gym class `classUuid`
--   booking `bookingUuid`
+For gym class creation, `trainerUuid` must be the **trainer profile UUID** from `POST /api/trainers` (stored as `trainer_uuid`), **not** the trainer’s authentication `userUuid`.
 
-For gym class creation, `trainerUuid` must refer to the **Trainer
-profile UUID** returned by the trainer-profile endpoint, not merely the
-authentication `userUuid`.
+For bookings, `memberUuid` must be the **member profile UUID** from `POST /api/members`, **not** the member’s user UUID.
 
 ## Gym Classes
 
@@ -72,14 +111,14 @@ authentication `userUuid`.
 POST {{base_url}}/gym-classes
 ```
 
-Example:
+Example (manually verified date/name):
 
 ``` json
 {
   "name": "Morning Yoga",
   "trainerUuid": "{{trainer_uuid}}",
   "capacity": 15,
-  "dateTime": "2026-09-26T10:00:00"
+  "dateTime": "2026-10-15T09:00:00"
 }
 ```
 
@@ -125,12 +164,14 @@ Expected: **204 No Content**.
 POST {{base_url}}/gym-classes
 ```
 
+Example (manually verified date/name):
+
 ``` json
 {
-  "name": "Booking Test Class",
+  "name": "Evening CrossFit",
   "trainerUuid": "{{trainer_uuid}}",
-  "capacity": 15,
-  "dateTime": "2026-09-26T20:00:00"
+  "capacity": 10,
+  "dateTime": "2026-10-15T18:00:00"
 }
 ```
 
@@ -249,8 +290,9 @@ specific reason.
 
 ## Acceptance criteria
 
-The current implementation is externally verified when the full
-collection reports:
+For this submission, the API flow is accepted when Postman **1.1–6.6** succeed and **7.1–7.2** return **401** as designed.
+
+A historical documented Runner summary (not a file in this repo) was:
 
 ``` text
 Passed: 58
@@ -260,9 +302,7 @@ Errors: 0
 Pass rate: 100%
 ```
 
-Any future backend change should rerun the complete collection and
-compare against this 58/58 baseline.
+Do not treat that as a current saved report. Re-run the collection after backend changes.
 
 The Postman result is evidence of API behavior, but it does not by
-itself prove that the implementation is architecturally correct. Cursor
-should therefore inspect the actual source code separately.
+itself prove that the implementation is architecturally correct.

@@ -104,7 +104,7 @@ The system enforces different permissions based on user roles:
    {
      "name": "Admin User",
      "email": "admin@gym.com",
-     "password": "admin123",
+     "password": "password123",
      "role": "ADMIN"
    }
    ```

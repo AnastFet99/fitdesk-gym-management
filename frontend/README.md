@@ -111,7 +111,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/members` | List all members |
+| GET | `/api/members` | List members (backend allows **ADMIN** and **MEMBER** only; not TRAINER) |
 | GET | `/api/members/{uuid}` | Get member by UUID |
 | POST | `/api/members` | Create member profile |
 
@@ -154,9 +154,10 @@ DELETE /api/bookings/{bookingUuid}
 | Backend field | Do NOT use |
 |---------------|------------|
 | `uuid` | `id` |
-| `memberUuid` | `userId`, `memberId` |
+| `memberUuid` (member **profile** UUID) | member **user** UUID, `userId`, `memberId` |
 | `gymClassUuid` | `classId` |
-| `userUuid` | `userId` (in auth context) |
+| `userUuid` (auth **user** UUID) | `userId` |
+| `trainerUuid` (trainer **profile** UUID, gym classes) | trainer **user** UUID |
 | `status` | `bookingStatus` |
 
 **Booking status values:** `PENDING`, `CONFIRMED`, `CANCELLED`
@@ -193,7 +194,7 @@ These are **real backend accounts** used through the actual login API (not fake 
 
 Clicking a demo account on the login page prefills email and password, then submits to `POST /api/auth/login`.
 
-> Demo accounts must already exist in the backend database (created via Postman registration or seed data).
+> Demo accounts must already exist in the backend database (created via Postman or `POST /api/auth/register`). There is **no** automatic database seed.
 
 ---
 
@@ -396,7 +397,8 @@ This frontend does **not** modify:
 - Postman collection contents
 
 Postman collection location: `../backend/postman/Gym_Management_API.postman_collection.json`
-Verified baseline (see `../backend/FINAL_API_DOCUMENTATION1.md`): **58/58 tests passed**.
+
+Manually verified: requests **1.1–6.6** succeeded; **7.1–7.2** complete. There is no saved Runner report in the repo proving a current 58/58 run. See `../backend/FINAL_API_DOCUMENTATION1.md` (historical 58/58 note + current 1.1 / 1.2 flow).
 
 ---
 

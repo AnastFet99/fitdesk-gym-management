@@ -13,7 +13,7 @@ Your Gym Management System now includes full JWT-based authentication and author
 {
   "name": "Admin User",
   "email": "admin@gym.com",
-  "password": "admin123",
+  "password": "password123",
   "role": "ADMIN"
 }
 ```
@@ -38,7 +38,7 @@ Your Gym Management System now includes full JWT-based authentication and author
 ```json
 {
   "email": "admin@gym.com",
-  "password": "admin123"
+  "password": "password123"
 }
 ```
 
@@ -117,7 +117,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 {
   "name": "Admin User",
   "email": "admin@gym.com",
-  "password": "admin123",
+  "password": "password123",
   "role": "ADMIN"
 }
 ```
@@ -125,12 +125,12 @@ Copy the `token` from the response.
 
 2. **Authorize in Swagger**: Click "Authorize" → Enter `Bearer <admin-token>`
 
-3. **Register TRAINER** (using admin token):
+3. **Create TRAINER user** (`POST /api/users`, admin Bearer token — **not** `POST /api/auth/register`):
 ```json
 {
   "name": "John Trainer",
   "email": "trainer@gym.com",
-  "password": "trainer123",
+  "password": "password123",
   "role": "TRAINER"
 }
 ```
@@ -140,7 +140,7 @@ Copy the `token` from the response.
 {
   "name": "Jane Member",
   "email": "member@gym.com",
-  "password": "member123",
+  "password": "password123",
   "role": "MEMBER"
 }
 ```
@@ -151,7 +151,7 @@ Copy the `token` from the response.
 ```json
 {
   "email": "trainer@gym.com",
-  "password": "trainer123"
+  "password": "password123"
 }
 ```
 
@@ -190,7 +190,7 @@ Copy the `gymClassUuid`.
 ```json
 {
   "email": "member@gym.com",
-  "password": "member123"
+  "password": "password123"
 }
 ```
 
