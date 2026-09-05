@@ -254,10 +254,10 @@ Copy the `memberUuid`.
 Add these to your system environment or IDE run configuration:
 ```
 MYSQL_PASSWORD=your_mysql_password
-JWT_SECRET=mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm
+JWT_SECRET=${JWT_SECRET}
 ```
 
-The JWT secret can be customized via the `JWT_SECRET` environment variable (defaults to a secure value if not set).
+The JWT secret is read from the `JWT_SECRET` environment variable (`jwt.secret=${JWT_SECRET}`). It must be set; there is no committed default.
 
 ## Token Expiration
 

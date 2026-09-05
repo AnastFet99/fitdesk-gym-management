@@ -10,7 +10,7 @@
 
 ### 2. Configuration (`application.properties`)
 ```properties
-jwt.secret=${JWT_SECRET:mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm}
+jwt.secret=${JWT_SECRET}
 jwt.expiration=86400000  # 24 hours in milliseconds
 ```
 
@@ -178,7 +178,7 @@ Make sure these environment variables are set:
 
 ```bash
 MYSQL_PASSWORD=your_mysql_password
-JWT_SECRET=mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm  # Optional, has default
+JWT_SECRET=${JWT_SECRET}
 ```
 
 ## 🚀 Application Status
