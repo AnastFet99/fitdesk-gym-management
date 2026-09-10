@@ -30,8 +30,8 @@ public class AuthController {
     private final IAuthService authService;
 
     @Operation(summary = "Register a new user", 
-               description = "Creates a new user account and returns a JWT token. " +
-                           "Use this endpoint to register ADMIN, TRAINER, or MEMBER accounts.")
+               description = "Creates a MEMBER account and returns a JWT token. " +
+                           "Public registration accepts MEMBER only. ADMIN and TRAINER are rejected with HTTP 400.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User registered successfully",
                     content = @Content(schema = @Schema(implementation = AuthResponse.class))),
@@ -41,7 +41,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Registration data. Example: {\"name\": \"John Doe\", \"email\": \"john@gym.com\", \"password\": \"password123\", \"role\": \"TRAINER\"}")
+                    description = "Registration data. Example: {\"name\": \"John Doe\", \"email\": \"john@gym.com\", \"password\": \"password123\", \"role\": \"MEMBER\"}")
             @Valid @RequestBody RegisterRequest request) {
         log.info("POST /api/auth/register - Registering user: {}", request.email());
         AuthResponse response = authService.register(request);

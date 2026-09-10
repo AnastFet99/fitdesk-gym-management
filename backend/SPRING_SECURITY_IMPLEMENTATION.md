@@ -48,7 +48,7 @@ The system enforces different permissions based on user roles:
 
 | Endpoint | ADMIN | TRAINER | MEMBER |
 |----------|-------|---------|--------|
-| POST /api/auth/register | ✅ | ✅ | ✅ |
+| POST /api/auth/register | ❌ (400) | ❌ (400) | ✅ |
 | POST /api/auth/login | ✅ | ✅ | ✅ |
 | POST /api/users | ✅ | ❌ | ❌ |
 | GET /api/users/** | ✅ | ✅ | ✅ |
@@ -57,6 +57,8 @@ The system enforces different permissions based on user roles:
 | POST /api/gym-classes | ✅ | ✅ | ❌ |
 | POST /api/bookings | ✅ | ❌ | ✅ |
 | POST /api/subscriptions | ✅ | ❌ | ✅ |
+
+Public `POST /api/auth/register` accepts **MEMBER only** (ADMIN/TRAINER → 400). Authenticated `POST /api/users` remains ADMIN-only and can still create ADMIN, TRAINER, or MEMBER users.
 
 ### 5. Security Features
 
@@ -96,16 +98,14 @@ The system enforces different permissions based on user roles:
 
 1. **Open Swagger UI**: http://localhost:8080/swagger-ui.html
 
-2. **Register a new admin user**:
-   - Navigate to `Authentication` → `POST /api/auth/register`
+2. **Login as an existing admin user** (bootstrap or previously created; public register does not create ADMIN):
+   - Navigate to `Authentication` → `POST /api/auth/login`
    - Click "Try it out"
    - Use this request body:
    ```json
    {
-     "name": "Admin User",
      "email": "admin@gym.com",
-     "password": "password123",
-     "role": "ADMIN"
+     "password": "password123"
    }
    ```
    - Click "Execute"
@@ -132,11 +132,12 @@ See [JWT_TESTING_GUIDE.md](./JWT_TESTING_GUIDE.md) for:
 ## 🔐 How It Works
 
 ### Registration Flow
-1. User sends registration data to `/api/auth/register`
-2. `AuthService` validates email is unique
-3. Password is hashed with BCrypt
-4. User is saved to database
-5. JWT token is generated and returned
+1. User sends registration data to `/api/auth/register` with `role` **MEMBER**
+2. Non-MEMBER roles are rejected with HTTP 400
+3. `AuthService` validates email is unique
+4. Password is hashed with BCrypt
+5. User is saved to database
+6. JWT token is generated and returned
 
 ### Login Flow
 1. User sends credentials to `/api/auth/login`

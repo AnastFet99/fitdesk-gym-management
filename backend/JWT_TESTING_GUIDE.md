@@ -8,13 +8,15 @@ Your Gym Management System now includes full JWT-based authentication and author
 
 **Endpoint**: `POST /api/auth/register`
 
+Public registration accepts **MEMBER only**. `role` **ADMIN** or **TRAINER** returns **HTTP 400**. The first ADMIN is created via bootstrap (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) or already exists in the database, then logs in with `POST /api/auth/login`. ADMIN/TRAINER users can also be created with authenticated `POST /api/users`.
+
 **Request Body**:
 ```json
 {
-  "name": "Admin User",
-  "email": "admin@gym.com",
+  "name": "Jane Member",
+  "email": "member@gym.com",
   "password": "password123",
-  "role": "ADMIN"
+  "role": "MEMBER"
 }
 ```
 
@@ -24,9 +26,9 @@ Your Gym Management System now includes full JWT-based authentication and author
   "token": "eyJhbGciOiJIUzI1NiJ9...",
   "type": "Bearer",
   "userUuid": "3827c7ea-b192-4519-bc50-0e75de5ab413",
-  "name": "Admin User",
-  "email": "admin@gym.com",
-  "role": "ADMIN"
+  "name": "Jane Member",
+  "email": "member@gym.com",
+  "role": "MEMBER"
 }
 ```
 
@@ -73,7 +75,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ## Role-Based Access Control
 
 ### Public Endpoints (no authentication required)
-- `POST /api/auth/register`
+- `POST /api/auth/register` (MEMBER only; ADMIN/TRAINER → 400)
 - `POST /api/auth/login`
 - `/swagger-ui/**`, `/api-docs/**`
 
@@ -112,16 +114,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 
 ### Step 1: Register Users
 
-1. **Register ADMIN**:
+1. **Login as ADMIN** (first ADMIN comes from bootstrap or an existing DB user; public register cannot create ADMIN):
 ```json
+POST /api/auth/login
 {
-  "name": "Admin User",
   "email": "admin@gym.com",
-  "password": "password123",
-  "role": "ADMIN"
+  "password": "password123"
 }
 ```
-Copy the `token` from the response.
+Copy the `token` from the response. Public `POST /api/auth/register` with `"role": "ADMIN"` or `"role": "TRAINER"` returns **400**.
 
 2. **Authorize in Swagger**: Click "Authorize" → Enter `Bearer <admin-token>`
 

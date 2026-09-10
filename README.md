@@ -129,7 +129,7 @@ Hibernate creates/updates tables automatically (`spring.jpa.hibernate.ddl-auto=u
 
 ### Backend
 
-- **Registration:** `POST /api/auth/register` — creates user with BCrypt-hashed password; returns JWT.
+- **Registration:** `POST /api/auth/register` — public registration is **MEMBER only** (BCrypt password; returns JWT). ADMIN and TRAINER on this path return **400**. Create ADMIN/TRAINER users via authenticated `POST /api/users`, or the first ADMIN via bootstrap env (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 - **Login:** `POST /api/auth/login` — validates credentials; returns JWT.
 - **JWT:** Stateless; sent as `Authorization: Bearer <token>`; configured via `JWT_SECRET` and `jwt.expiration` (24 h).
 - **Password hashing:** BCrypt (`BCryptPasswordEncoder` in `SecurityConfig`).
@@ -241,7 +241,7 @@ This repository is a monorepo containing `backend/` and `frontend/`. Graders sho
 CREATE DATABASE IF NOT EXISTS gymapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Demo users are **not** auto-seeded. There is **no** database seed in this project. Create users via Postman or `POST /api/auth/register`, then create trainer/member **profiles** (`POST /api/trainers`, `POST /api/members`) as needed.
+Demo users are **not** auto-seeded. There is **no** database seed in this project. Public `POST /api/auth/register` creates **MEMBER** users only. Create ADMIN/TRAINER users via authenticated `POST /api/users` (or the first ADMIN via bootstrap), then create trainer/member **profiles** (`POST /api/trainers`, `POST /api/members`) as needed.
 
 ---
 
@@ -476,7 +476,7 @@ backend/postman/Gym_Management_API.postman_collection.json
 
 | Step | Request | What it does |
 |------|---------|----------------|
-| **1.1** | `POST /api/auth/register` | Register **ADMIN** (no auth). Save JWT → `jwt_token`. |
+| **1.1** | `POST /api/auth/login` | Login as existing **ADMIN** (bootstrap or previously created; no auth). Save JWT → `jwt_token`. |
 | **1.2** | `POST /api/users` | Create **TRAINER user**. Requires `Authorization: Bearer {{jwt_token}}` (admin from 1.1). **Not** `POST /api/auth/register`. |
 | **1.3** | `POST /api/auth/register` | Register **MEMBER**. |
 | **3.2** | `POST /api/trainers` | Trainer **profile**; save **profile** UUID → `trainer_uuid`. |
@@ -485,7 +485,7 @@ backend/postman/Gym_Management_API.postman_collection.json
 | **6.3** | `POST /api/bookings` | Use `member_uuid` (profile) + `class_uuid`. |
 | **7.1–7.2** | Unauthorized / invalid token | Expect **401**. |
 
-If `admin@gym.com` / `trainer@gym.com` / `member@gym.com` already exist, 1.1–1.3 will **409**. Use unique emails in collection variables, or use an empty database.
+If `trainer@gym.com` / `member@gym.com` already exist, 1.2–1.3 will **409**. Use unique emails in collection variables. **1.1** logs in an existing ADMIN; it does not register one.
 
 **Manually verified (this submission):** Postman **1.1–6.6** succeeded; **7.1–7.2** are complete. There is **no saved Collection Runner report** in the repository proving a current 58/58 run. `FINAL_API_DOCUMENTATION1.md` records a **historical** documented Runner result of 58/58; treat that as historical, not as a stored artifact.
 
@@ -510,7 +510,7 @@ If `admin@gym.com` / `trainer@gym.com` / `member@gym.com` already exist, 1.1–1
 
 ## 18. Demo Accounts
 
-Use these **only if the corresponding users already exist** in MySQL. The project does **not** seed them automatically. Create them with Postman or `POST /api/auth/register` (and `POST /api/users` for the trainer user in the collection flow).
+Use these **only if the corresponding users already exist** in MySQL. The project does **not** seed them automatically. Create the first ADMIN via bootstrap (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) or authenticated `POST /api/users`. Public `POST /api/auth/register` creates **MEMBER** only. Create the trainer **user** with `POST /api/users` in the collection flow.
 
 | Name | Email | Role | Password |
 |------|-------|------|----------|

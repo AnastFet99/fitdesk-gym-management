@@ -24,13 +24,13 @@ Canonical collection: `postman/Gym_Management_API.postman_collection.json`
 
 ## Current working Postman order (start)
 
-### 1.1 Register Admin
+### 1.1 Login as Admin
 
 ``` http
-POST {{base_url}}/auth/register
+POST {{base_url}}/auth/login
 ```
 
-No Bearer token. Creates an **ADMIN** user and returns a JWT. Save `token` to `jwt_token`.
+No Bearer token. Logs in an existing **ADMIN** (bootstrap env or previously created user) and returns a JWT. Save `token` to `jwt_token`. Public `POST /api/auth/register` cannot create ADMIN.
 
 ### 1.2 Register Trainer (create TRAINER **user**)
 
@@ -50,7 +50,7 @@ POST {{base_url}}/auth/register
 
 Creates the MEMBER **user**. Profile is created later (`POST /api/members`).
 
-If collection emails (`admin@gym.com`, `trainer@gym.com`, `member@gym.com`) already exist, register/create-user returns **409**. Use unique emails or an empty database. There is **no** automatic seed.
+If trainer/member collection emails already exist, 1.2–1.3 return **409**. Use unique emails. **1.1** logs in an existing ADMIN. There is **no** automatic seed (optional ADMIN bootstrap via env).
 
 ## Collection variables
 

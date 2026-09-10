@@ -1,10 +1,12 @@
 package gr.aueb.cf10.gymapp.service;
 
 import gr.aueb.cf10.gymapp.core.exceptions.EntityAlreadyExistsException;
+import gr.aueb.cf10.gymapp.core.exceptions.EntityInvalidArgumentException;
 import gr.aueb.cf10.gymapp.dto.AuthResponse;
 import gr.aueb.cf10.gymapp.dto.LoginRequest;
 import gr.aueb.cf10.gymapp.dto.RegisterRequest;
 import gr.aueb.cf10.gymapp.model.User;
+import gr.aueb.cf10.gymapp.model.enums.Role;
 import gr.aueb.cf10.gymapp.repository.UserRepository;
 import gr.aueb.cf10.gymapp.security.CustomUserDetails;
 import gr.aueb.cf10.gymapp.security.JwtUtil;
@@ -32,6 +34,11 @@ public class AuthServiceImpl implements IAuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         log.info("Registering new user: {}", request.email());
+
+        if (request.role() != Role.MEMBER) {
+            log.error("Public registration rejected for role: {}", request.role());
+            throw new EntityInvalidArgumentException("Public registration is limited to MEMBER role");
+        }
 
         if (userRepository.existsByEmail(request.email())) {
             log.error("User with email {} already exists", request.email());
