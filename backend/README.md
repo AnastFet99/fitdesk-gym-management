@@ -260,6 +260,11 @@ Demo users are **not** auto-seeded. There is **no** database seed in this projec
 |----------|---------|---------|
 | `MYSQL_USER` | MySQL username | `root` |
 | `CORS_ORIGINS` | Allowed frontend origins (comma-separated) | `http://localhost:3000,http://localhost:5173,...` |
+| `ADMIN_EMAIL` | Email for the optional first ADMIN user | empty (skipped) |
+| `ADMIN_PASSWORD` | Password for the optional first ADMIN; leave unset to skip bootstrap | empty (skipped) |
+| `ADMIN_NAME` | Display name for the bootstrap ADMIN | `Admin User` |
+
+Bootstrap runs only when `ADMIN_PASSWORD` is set, no ADMIN already exists, and `ADMIN_EMAIL` is unused. The password is stored with BCrypt. It is not a database seed.
 
 **PowerShell (current session):**
 
