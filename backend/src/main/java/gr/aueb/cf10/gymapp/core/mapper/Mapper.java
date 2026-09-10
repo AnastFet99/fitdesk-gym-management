@@ -21,7 +21,7 @@ public class Mapper {
         return gymClass;
     }
 
-    public GymClassReadOnlyDTO mapToReadOnlyDTO(GymClass gymClass) {
+    public GymClassReadOnlyDTO mapToReadOnlyDTO(GymClass gymClass, int bookedCount) {
         Trainer trainer = gymClass.getTrainer();
         return new GymClassReadOnlyDTO(
                 gymClass.getUuid(),
@@ -30,6 +30,7 @@ public class Mapper {
                 trainer.getUser().getName(),
                 trainer.getSpecialty(),
                 gymClass.getCapacity(),
+                bookedCount,
                 gymClass.getDateTime()
         );
     }

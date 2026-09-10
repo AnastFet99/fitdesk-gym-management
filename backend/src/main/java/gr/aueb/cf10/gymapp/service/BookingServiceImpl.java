@@ -9,12 +9,18 @@ import gr.aueb.cf10.gymapp.dto.BookingReadOnlyDTO;
 import gr.aueb.cf10.gymapp.model.Booking;
 import gr.aueb.cf10.gymapp.model.GymClass;
 import gr.aueb.cf10.gymapp.model.Member;
+import gr.aueb.cf10.gymapp.model.User;
 import gr.aueb.cf10.gymapp.model.enums.BookingStatus;
+import gr.aueb.cf10.gymapp.model.enums.Role;
 import gr.aueb.cf10.gymapp.repository.BookingRepository;
 import gr.aueb.cf10.gymapp.repository.GymClassRepository;
 import gr.aueb.cf10.gymapp.repository.MemberRepository;
+import gr.aueb.cf10.gymapp.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +43,16 @@ public class BookingServiceImpl implements IBookingService {
         log.info("Creating booking for member uuid: {} and gym class uuid: {}",
                 insertDTO.memberUuid(), insertDTO.gymClassUuid());
 
-        Member member = memberRepository.findByUuid(insertDTO.memberUuid())
-                .orElseThrow(() -> {
-                    log.error("Member with uuid {} not found", insertDTO.memberUuid());
-                    return new EntityNotFoundException("Member", insertDTO.memberUuid());
-                });
+        Member member;
+        if (isMember()) {
+            member = requireAuthenticatedMember();
+        } else {
+            member = memberRepository.findByUuid(insertDTO.memberUuid())
+                    .orElseThrow(() -> {
+                        log.error("Member with uuid {} not found", insertDTO.memberUuid());
+                        return new EntityNotFoundException("Member", insertDTO.memberUuid());
+                    });
+        }
 
         GymClass gymClass = gymClassRepository.findByUuid(insertDTO.gymClassUuid())
                 .orElseThrow(() -> {
@@ -51,7 +62,7 @@ public class BookingServiceImpl implements IBookingService {
 
         // Check if member already has a booking for this class
         if (bookingRepository.existsByMemberAndGymClass(member, gymClass)) {
-            log.error("Booking already exists for member id {} and gym class id {}", 
+            log.error("Booking already exists for member id {} and gym class id {}",
                     member.getId(), gymClass.getId());
             throw new EntityAlreadyExistsException("Booking already exists for this member and gym class");
         }
@@ -59,7 +70,7 @@ public class BookingServiceImpl implements IBookingService {
         // Check capacity
         long confirmedBookings = bookingRepository.countByGymClassAndStatus(gymClass, BookingStatus.CONFIRMED);
         if (confirmedBookings >= gymClass.getCapacity()) {
-            log.error("Gym class {} is at full capacity ({}/{})", 
+            log.error("Gym class {} is at full capacity ({}/{})",
                     gymClass.getName(), confirmedBookings, gymClass.getCapacity());
             throw new EntityInvalidArgumentException("Gym class is at full capacity");
         }
@@ -82,11 +93,17 @@ public class BookingServiceImpl implements IBookingService {
                     return new EntityNotFoundException("Booking", uuid);
                 });
 
-        Member member = memberRepository.findByUuid(insertDTO.memberUuid())
-                .orElseThrow(() -> {
-                    log.error("Member with uuid {} not found", insertDTO.memberUuid());
-                    return new EntityNotFoundException("Member", insertDTO.memberUuid());
-                });
+        Member member;
+        if (isMember()) {
+            Member authenticatedMember = requireOwnedBooking(existingBooking);
+            member = authenticatedMember;
+        } else {
+            member = memberRepository.findByUuid(insertDTO.memberUuid())
+                    .orElseThrow(() -> {
+                        log.error("Member with uuid {} not found", insertDTO.memberUuid());
+                        return new EntityNotFoundException("Member", insertDTO.memberUuid());
+                    });
+        }
 
         GymClass gymClass = gymClassRepository.findByUuid(insertDTO.gymClassUuid())
                 .orElseThrow(() -> {
@@ -117,6 +134,10 @@ public class BookingServiceImpl implements IBookingService {
                     return new EntityNotFoundException("Booking", uuid);
                 });
 
+        if (isMember()) {
+            requireOwnedBooking(existingBooking);
+        }
+
         existingBooking.setStatus(status);
         Booking updatedBooking = bookingRepository.save(existingBooking);
 
@@ -135,6 +156,10 @@ public class BookingServiceImpl implements IBookingService {
                     return new EntityNotFoundException("Booking", uuid);
                 });
 
+        if (isMember()) {
+            requireOwnedBooking(booking);
+        }
+
         bookingRepository.delete(booking);
         log.info("Successfully deleted booking with uuid: {}", uuid);
     }
@@ -150,6 +175,10 @@ public class BookingServiceImpl implements IBookingService {
                     return new EntityNotFoundException("Booking", uuid);
                 });
 
+        if (isMember()) {
+            requireOwnedBooking(booking);
+        }
+
         return mapper.mapToReadOnlyDTO(booking);
     }
 
@@ -157,6 +186,14 @@ public class BookingServiceImpl implements IBookingService {
     @Transactional(readOnly = true)
     public List<BookingReadOnlyDTO> getAllBookings() {
         log.info("Fetching all bookings");
+
+        if (isMember()) {
+            Member member = requireAuthenticatedMember();
+            return bookingRepository.findByMemberId(member.getId())
+                    .stream()
+                    .map(mapper::mapToReadOnlyDTO)
+                    .toList();
+        }
 
         return bookingRepository.findAll()
                 .stream()
@@ -168,6 +205,13 @@ public class BookingServiceImpl implements IBookingService {
     @Transactional(readOnly = true)
     public List<BookingReadOnlyDTO> getBookingsByMemberUuid(UUID memberUuid) {
         log.info("Fetching bookings for member uuid: {}", memberUuid);
+
+        if (isMember()) {
+            Member authenticatedMember = requireAuthenticatedMember();
+            if (!authenticatedMember.getUuid().equals(memberUuid)) {
+                throw new AccessDeniedException("Access denied");
+            }
+        }
 
         Member member = memberRepository.findByUuid(memberUuid)
                 .orElseThrow(() -> {
@@ -192,8 +236,15 @@ public class BookingServiceImpl implements IBookingService {
                     return new EntityNotFoundException("GymClass", gymClassUuid);
                 });
 
-        return bookingRepository.findByGymClassId(gymClass.getId())
-                .stream()
+        List<Booking> bookings = bookingRepository.findByGymClassId(gymClass.getId());
+        if (isMember()) {
+            Member member = requireAuthenticatedMember();
+            bookings = bookings.stream()
+                    .filter(b -> b.getMember().getId().equals(member.getId()))
+                    .toList();
+        }
+
+        return bookings.stream()
                 .map(mapper::mapToReadOnlyDTO)
                 .toList();
     }
@@ -203,9 +254,42 @@ public class BookingServiceImpl implements IBookingService {
     public List<BookingReadOnlyDTO> getBookingsByStatus(BookingStatus status) {
         log.info("Fetching bookings with status: {}", status);
 
-        return bookingRepository.findByStatus(status)
-                .stream()
+        List<Booking> bookings = bookingRepository.findByStatus(status);
+        if (isMember()) {
+            Member member = requireAuthenticatedMember();
+            bookings = bookings.stream()
+                    .filter(b -> b.getMember().getId().equals(member.getId()))
+                    .toList();
+        }
+
+        return bookings.stream()
                 .map(mapper::mapToReadOnlyDTO)
                 .toList();
+    }
+
+    private User currentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails details)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return details.getUser();
+    }
+
+    private boolean isMember() {
+        return currentUser().getRole() == Role.MEMBER;
+    }
+
+    private Member requireAuthenticatedMember() {
+        User user = currentUser();
+        return memberRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new AccessDeniedException("Access denied"));
+    }
+
+    private Member requireOwnedBooking(Booking booking) {
+        Member authenticatedMember = requireAuthenticatedMember();
+        if (!authenticatedMember.getId().equals(booking.getMember().getId())) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return authenticatedMember;
     }
 }

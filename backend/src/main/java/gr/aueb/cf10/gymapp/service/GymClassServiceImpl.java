@@ -7,6 +7,8 @@ import gr.aueb.cf10.gymapp.dto.GymClassInsertDTO;
 import gr.aueb.cf10.gymapp.dto.GymClassReadOnlyDTO;
 import gr.aueb.cf10.gymapp.model.GymClass;
 import gr.aueb.cf10.gymapp.model.Trainer;
+import gr.aueb.cf10.gymapp.model.enums.BookingStatus;
+import gr.aueb.cf10.gymapp.repository.BookingRepository;
 import gr.aueb.cf10.gymapp.repository.GymClassRepository;
 import gr.aueb.cf10.gymapp.repository.TrainerRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -23,8 +27,12 @@ import java.util.UUID;
 @Slf4j
 public class GymClassServiceImpl implements IGymClassService {
 
+    private static final List<BookingStatus> OCCUPANCY_STATUSES =
+            List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
+
     private final GymClassRepository gymClassRepository;
     private final TrainerRepository trainerRepository;
+    private final BookingRepository bookingRepository;
     private final Mapper mapper;
 
     @Override
@@ -50,7 +58,7 @@ public class GymClassServiceImpl implements IGymClassService {
         GymClass savedGymClass = gymClassRepository.save(gymClass);
 
         log.info("Successfully created gym class with uuid: {}", savedGymClass.getUuid());
-        return mapper.mapToReadOnlyDTO(savedGymClass);
+        return mapper.mapToReadOnlyDTO(savedGymClass, 0);
     }
 
     @Override
@@ -84,7 +92,7 @@ public class GymClassServiceImpl implements IGymClassService {
         GymClass updatedGymClass = gymClassRepository.save(existingGymClass);
         log.info("Successfully updated gym class with uuid: {}", uuid);
 
-        return mapper.mapToReadOnlyDTO(updatedGymClass);
+        return mapper.mapToReadOnlyDTO(updatedGymClass, occupancyCount(updatedGymClass));
     }
 
     @Override
@@ -113,7 +121,7 @@ public class GymClassServiceImpl implements IGymClassService {
                     return new EntityNotFoundException("GymClass", uuid);
                 });
 
-        return mapper.mapToReadOnlyDTO(gymClass);
+        return mapper.mapToReadOnlyDTO(gymClass, occupancyCount(gymClass));
     }
 
     @Override
@@ -121,9 +129,11 @@ public class GymClassServiceImpl implements IGymClassService {
     public List<GymClassReadOnlyDTO> getAllGymClasses() {
         log.info("Fetching all gym classes");
 
+        Map<Long, Integer> occupancyByClassId = occupancyMap();
         return gymClassRepository.findAll()
                 .stream()
-                .map(mapper::mapToReadOnlyDTO)
+                .map(gymClass -> mapper.mapToReadOnlyDTO(
+                        gymClass, occupancyByClassId.getOrDefault(gymClass.getId(), 0)))
                 .toList();
     }
 
@@ -132,9 +142,25 @@ public class GymClassServiceImpl implements IGymClassService {
     public List<GymClassReadOnlyDTO> getGymClassesByTrainerId(Long trainerId) {
         log.info("Fetching gym classes for trainer id: {}", trainerId);
 
+        Map<Long, Integer> occupancyByClassId = occupancyMap();
         return gymClassRepository.findByTrainerId(trainerId)
                 .stream()
-                .map(mapper::mapToReadOnlyDTO)
+                .map(gymClass -> mapper.mapToReadOnlyDTO(
+                        gymClass, occupancyByClassId.getOrDefault(gymClass.getId(), 0)))
                 .toList();
+    }
+
+    private int occupancyCount(GymClass gymClass) {
+        return (int) bookingRepository.countByGymClassAndStatusIn(gymClass, OCCUPANCY_STATUSES);
+    }
+
+    private Map<Long, Integer> occupancyMap() {
+        Map<Long, Integer> occupancyByClassId = new HashMap<>();
+        for (Object[] row : bookingRepository.countBookingsByGymClassAndStatuses(OCCUPANCY_STATUSES)) {
+            Long classId = (Long) row[0];
+            int count = ((Number) row[1]).intValue();
+            occupancyByClassId.put(classId, count);
+        }
+        return occupancyByClassId;
     }
 }

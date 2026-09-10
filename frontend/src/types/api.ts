@@ -76,6 +76,7 @@ export interface GymClassReadOnlyDTO {
   trainerName: string;
   trainerSpecialty: string;
   capacity: number;
+  bookedCount: number;
   dateTime: string; // ISO 8601 string
 }
 

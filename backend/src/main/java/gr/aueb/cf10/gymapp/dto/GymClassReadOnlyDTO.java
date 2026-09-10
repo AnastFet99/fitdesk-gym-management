@@ -10,5 +10,6 @@ public record GymClassReadOnlyDTO(
         String trainerName,
         String trainerSpecialty,
         int capacity,
+        int bookedCount,
         LocalDateTime dateTime
 ) {}

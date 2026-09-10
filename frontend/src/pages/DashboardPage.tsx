@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAllGymClasses } from '../services/gymClassService';
-import { getAllBookings } from '../services/bookingService';
-import type { BookingStatus } from '../types/api';
 
 export function DashboardPage() {
   const { data: classes, isLoading: classesLoading } = useQuery({
@@ -9,22 +7,7 @@ export function DashboardPage() {
     queryFn: getAllGymClasses,
   });
 
-  const { data: bookings, isLoading: bookingsLoading } = useQuery({
-    queryKey: ['bookings'],
-    queryFn: getAllBookings,
-  });
-
-  const isActiveBooking = (status: BookingStatus) =>
-    status === 'CONFIRMED' || status === 'PENDING';
-
-  const getBookedCount = (classUuid: string) => {
-    if (!bookings) return 0;
-    return bookings.filter(
-      (b) => b.gymClassUuid === classUuid && isActiveBooking(b.status)
-    ).length;
-  };
-
-  if (classesLoading || bookingsLoading) {
+  if (classesLoading) {
     return (
       <div className="main-content">
         <div className="loading">Loading dashboard...</div>
@@ -56,7 +39,7 @@ export function DashboardPage() {
 
       <div className="grid grid-2">
         {classes.map((gymClass) => {
-          const booked = getBookedCount(gymClass.uuid);
+          const booked = gymClass.bookedCount;
           const isFull = booked >= gymClass.capacity;
 
           return (
